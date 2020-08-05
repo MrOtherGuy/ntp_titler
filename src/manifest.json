@@ -1,11 +1,11 @@
 {
 
-  "description": "Adds a title prefix - 'NewTab' - for the current window when a newtab-page is active",
+  "description": "Adds a title prefix - for the current window based on the type of the active page",
 	"author": "MrOtherGuy",
   "manifest_version": 2,
   "name": "ntp_titler",
   "permissions": ["tabs","browserSettings"],
-  "version": "0.1",
+  "version": "0.2",
 	"background": {
 		"scripts": ["background-script.js"]
 	},
