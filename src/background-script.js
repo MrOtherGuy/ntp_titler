@@ -72,16 +72,16 @@
   });
   
   function onTabUpdated(tabId,info,tab){
-    //const isNewtab = BROWSER_URLS.includes(tab.url);
+    
     const tabType = BROWSER_URLS.match(tab);
     const isKnown = activeNewtabs.has(tabId);
-    if(/*isNewtab*/tabType && !isKnown){
+    if(tabType && !isKnown){
       // This happens when navigation occurs to ntp tab without creating a tab
       activeNewtabs.set(tabId,new NewTab(tab));
     }else if(isKnown && tabType != "Blank"){
       activeNewtabs.delete(tabId);
     }
-    //browser.windows.update(tab.windowId,{titlePreface:isNewtab?"NewTab":""});
+    
     browser.windows.update(tab.windowId,{titlePreface:tabType.length>3?`${tabType} - `:""})
   }
   
@@ -97,10 +97,6 @@
     
     let prefix = !tab?"NewTab":`${BROWSER_URLS.match(tab)} - `;
 
-
-    //const str = (!tab || BROWSER_URLS.includes(tab.url)) ? "NewTab" : "";
-    //browser.windows.update(win,{titlePreface:str});
-    //const str = `${!tab?"NewTab":BROWSER_URLS.match(tab)} - `;
     browser.windows.update(win,{titlePreface:prefix.length > 3?prefix:""});
   }
   
