@@ -73,6 +73,8 @@
   
   function onTabUpdated(tabId,info,tab){
     
+    if(!tab.active){ return }
+    
     const tabType = BROWSER_URLS.match(tab);
     const isKnown = activeNewtabs.has(tabId);
     if(tabType && !isKnown){
