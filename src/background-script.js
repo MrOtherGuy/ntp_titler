@@ -110,7 +110,13 @@
   }
   // Timeout to make sure this happens after onCreated
   // and also to make sure this runs after a tab is loaded in new window since it will initially likely load about:blank and we can't reliably detect when about:blank will be replaced with the eventual content
-  browser.tabs.onActivated.addListener((t)=>setTimeout(()=>onActivated(t),100));
+  browser.tabs.onActivated.addListener((t)=>{
+    if(activeNewtabs.has(t.tabId)){
+      setTimeout(()=>onActivated(t),50)
+    }else{
+      onActivated(t)
+    }
+  });
  
   
 })()
