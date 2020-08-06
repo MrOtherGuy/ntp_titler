@@ -73,7 +73,7 @@
   
   function onTabUpdated(tabId,info,tab){
     
-    if(!tab.active){ return }
+    if(!tab.active || tab.status === "loading"){ return }
     
     const tabType = BROWSER_URLS.match(tab);
     const isKnown = activeNewtabs.has(tabId);
@@ -87,7 +87,7 @@
     browser.windows.update(tab.windowId,{titlePreface:tabType.length>3?`${tabType} - `:""})
   }
   
-  browser.tabs.onUpdated.addListener(onTabUpdated,{properties:["title"]});
+  browser.tabs.onUpdated.addListener(onTabUpdated,{properties:["status"]});
   
   function setProperties(tab,tabId){
     let match = tab === null ? tabId : tab.id;
@@ -106,15 +106,8 @@
     let getting = browser.tabs.get(tabInfo.tabId);
     getting.then(setProperties,(err)=>(setProperties(null,tabInfo.tabId)));
   }
-  // Timeout to make sure this happens after onCreated
-  // and also to make sure this runs after a tab is loaded in new window since it will initially likely load about:blank and we can't reliably detect when about:blank will be replaced with the eventual content
-  browser.tabs.onActivated.addListener((t)=>{
-    if(activeNewtabs.has(t.tabId)){
-      setTimeout(()=>onActivated(t),50)
-    }else{
-      onActivated(t)
-    }
-  });
+
+  browser.tabs.onActivated.addListener(onActivated);
  
   
 })()
