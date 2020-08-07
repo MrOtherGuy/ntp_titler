@@ -38,7 +38,6 @@
     return this
   })()
   
-  const activeNewtabs = new Map();
   
   Promise.all([
     browser.browserSettings.newTabPageOverride.get({}),
@@ -56,59 +55,46 @@
     }
   });
   
-  function NewTab(tab){
-    this.id = tab.id;
-    this.window = tab.windowId;
+  const titleManager = new(function(){
+    let current = null;
+    
+    this.setPrefix = tab=>{
+      
+      const prefix = BROWSER_URLS.match(tab);
+      
+      if (current === prefix){
+        return
+      }
+      
+      browser.windows.update(tab.windowId,{titlePreface: prefix.length > 0 ? `${prefix} - ` : ""})
+      .then(()=>{current = prefix})
+    };
+    
     return this
-  }
-  
-  
-  browser.tabs.onCreated.addListener(a=>{
-    activeNewtabs.set(a.id,new NewTab(a))
-  });
-  
-  browser.tabs.onRemoved.addListener(a=>{
-    setTimeout(()=>(activeNewtabs.delete(a)),500)
-  });
+  })();
   
   function onTabUpdated(tabId,info,tab){
     
-    if(!tab.active || tab.status === "loading"){ return }
-    
-    const tabType = BROWSER_URLS.match(tab);
-    const isKnown = activeNewtabs.has(tabId);
-    if(tabType && !isKnown){
-      // This happens when navigation occurs to ntp tab without creating a tab
-      activeNewtabs.set(tabId,new NewTab(tab));
-    }else if(isKnown && tabType != "Blank"){
-      activeNewtabs.delete(tabId);
-    }
-    
-    browser.windows.update(tab.windowId,{titlePreface:tabType.length>3?`${tabType} - `:""})
-  }
-  
-  browser.tabs.onUpdated.addListener(onTabUpdated,{properties:["status"]});
-  
-  function setProperties(tab,tabId){
-    let match = tab === null ? tabId : tab.id;
-    let ntp = activeNewtabs.get(match);
-    let win = ntp ? ntp.window : tab.windowId;
-    if(win === undefined || win === null){
+    if(!tab.active || (tab.status === "loading" && !info.title) ){
       return
     }
-    
-    let prefix = !tab?"NewTab":`${BROWSER_URLS.match(tab)} - `;
-
-    browser.windows.update(win,{titlePreface:prefix.length > 3?prefix:""});
+    titleManager.setPrefix(tab);
+  }
+  
+  browser.tabs.onUpdated.addListener(onTabUpdated,{properties:["status","title"]});
+  
+  function setProperties(tab){
+    if(tab.windowId === undefined || tab.windowId === null){
+      return
+    }
+    titleManager.setPrefix(tab);
   }
   
   function onActivated(tabInfo){
-    let getting = browser.tabs.get(tabInfo.tabId);
-    getting.then(setProperties,(err)=>(setProperties(null,tabInfo.tabId)));
+    browser.tabs.get(tabInfo.tabId).then(setProperties);
   }
 
   browser.tabs.onActivated.addListener(onActivated);
- 
   
 })()
 
