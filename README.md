@@ -20,6 +20,26 @@ The prefix is determined by the type of the page. The prefix is determined match
 * If the user loads any http: url then it will receive `http - ` prefix
 * If the user has set some extension page as their newtab, and they navigate to `about:newtab` then it will receive `chromeUI - ` prefix
 
+# What is this useful for?
+
+Honestly? Probably not much - except if you are into userChrome.css customization. This extension allows setting a "active tab type" as a prefix to the window. Luckily, Firefox (currently) stores the prefix in such a way that it can be used to conditionally style the window based on what type of tab is active. For example, you could show/hide various toolbars or buttons based on if the active tab is newtab page. Or you could make the UI bright red if the active page is using unsecured http connection.
+
+## Some selectors for use in userChrome.css
+
+```css
+:root[titlepreface="http - "] 
+:root[titlepreface="chromeUI - "]
+:root[titlepreface="NewTab - "]
+:root[titlepreface="Home - "]
+:root[titlepreface="Blank - "]
+:root[titlepreface="PrivateBrowsing - "]
+:root[titlepreface="moz-extension - "]
+```
+
+Note that https: pages don't get any prefix - unless the particular url is set as your home or newtab page.
+
+Also, there is no particular reason to believe that Firefox will always store the prefix in window element in such a way that this information is usable in userChrome.css. That's just how Firefox works right now, but it isn't in any way part of officially supported webextensions API.
+
 # Known problems
 
 * Firefox needs to be restarted after newtab or homepage have been modified for lableing to work properly.
