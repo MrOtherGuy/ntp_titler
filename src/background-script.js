@@ -1,11 +1,11 @@
 'use strict';
 (function(){
   
-  // Store home and newtab urls
-  // This won't be updated during runtime so if you change those you'll need to restart Firefox
   const BROWSER_URLS = new(function(){
     
     const urls = new Array(4);
+    urls[0] = null,
+    urls[1] = null,
     urls[2] = "about:privatebrowsing";
     urls[3] = "about:blank";
 
@@ -33,19 +33,24 @@
       return (tab.url.slice(0,tab.url.indexOf(":")))
       
     }      
-    this.setInitials = (ntp,home) => { urls[0] = ntp.value, urls[1] = home.value };
+    this.setInitials = (pages) => { urls[0] = pages[0].value, urls[1] = pages[1].value };
     
     return this
   })()
   
+  function getPages(){
+    return new Promise((resolve, reject) => {
+      Promise.all([
+        browser.browserSettings.newTabPageOverride.get({}),
+        browser.browserSettings.homepageOverride.get({})
+      ])
+      .then(resolve)
+      .catch(reject)
+    })      
+  }
   
-  Promise.all([
-    browser.browserSettings.newTabPageOverride.get({}),
-    browser.browserSettings.homepageOverride.get({})
-  ])
-  .then(results=>{
-    BROWSER_URLS.setInitials(results[0],results[1])
-  })
+  getPages()
+  .then(BROWSER_URLS.setInitials)
   .then(()=>(new Promise(r=>{setTimeout(r,500)})))
   .then(()=>browser.tabs.query({active:true}))
   .then(tabs=>{
@@ -58,7 +63,13 @@
   const titleManager = new(function(){
     let current = null;
     
-    this.setPrefix = tab=>{
+    this.setPrefix = async tab => {
+      
+      
+      if(current === "chromeUI"){
+        let pages = await getPages();
+        BROWSER_URLS.setInitials(pages)
+      }
       
       const prefix = BROWSER_URLS.match(tab);
       
@@ -66,8 +77,8 @@
         return
       }
       
-      browser.windows.update(tab.windowId,{titlePreface: prefix.length > 0 ? `${prefix} - ` : ""})
-      .then(()=>{current = prefix})
+      await browser.windows.update(tab.windowId,{titlePreface: prefix.length > 0 ? `${prefix} - ` : ""});
+      current = prefix
     };
     
     return this
